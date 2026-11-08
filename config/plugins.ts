@@ -26,9 +26,16 @@ const deniedTypes = [
 const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin => ({
   'users-permissions': {
     config: {
-      jwtManagement: 'refresh',
-      sessions: {
-        httpOnly: true,
+      // One long-lived JWT per login (Strapi's default). The SSR frontend is
+      // the only client: it keeps this token server-side in its own signed,
+      // httpOnly session cookie, so the browser never sees it.
+      //
+      // Don't use 'refresh' mode here: access tokens then expire after 10
+      // minutes and the refresh token is set as a cookie on the SSR server's
+      // request, where it's discarded — authors get logged out mid-edit.
+      jwtManagement: 'legacy-support',
+      jwt: {
+        expiresIn: '30d', // matches the frontend's session cookie lifetime
       },
     },
   },
